@@ -47,44 +47,40 @@ func main() {
 	}
 	
 	placed := 0
-	rowSpacing := height + 1
-	if height == 1 {
-		rowSpacing = 2  // For height=1, use tighter spacing
-	}
-	colSpacing := width + height
 	
-	// Place hexagons row by row with hexagonal tiling
-	// Shift the entire grid so that the first hexagon starts at (0,0)
-	shiftX := 1 - height  // Move left so the leftmost part of first hexagon is at x=1
-	shiftY := 1           // Start at the top
+	// For hexagonal tiling with shared sides
+	colStep := width + height  // Distance between hexagon centers horizontally
+	rowStep := height + 1      // Distance between rows vertically
 	
 	for row := 0; placed < k; row++ {
-		y := row * rowSpacing + shiftY
+		y := row * rowStep + 1
+		
+		// Check if row fits within screen
 		if y + 2*height + 1 > n+1 {
 			break
 		}
 		
-		// Offset for odd rows (hexagonal tiling)
-		offset := 0
+		// Horizontal offset for odd rows (hexagonal tiling)
+		offsetX := 0
 		if row%2 == 1 {
-			offset = colSpacing / 2
+			offsetX = colStep / 2
 		}
 		
 		for col := 0; placed < k; col++ {
-			x := col * colSpacing + offset + shiftX
+			x := col * colStep + offsetX + 1
 			
-			// Check if hexagon would fit reasonably within bounds
-			if x + width + height > m + height {
+			// Check if hexagon fits horizontally
+			if x + width + 2*height - 1 > m+1 {
 				break
 			}
 			
-			// Draw hexagon
-			drawHexagon(screen, x, y, width, height)
+			// Draw hexagon at position (x, y)
+			drawHex(screen, x, y, width, height)
 			placed++
 		}
 	}
 	
-	// Print the screen
+	// Print screen
 	for i := 0; i < n+2; i++ {
 		for j := 0; j < m+2; j++ {
 			fmt.Print(string(screen[i][j]))
@@ -93,29 +89,30 @@ func main() {
 	}
 }
 
-func drawHexagon(screen [][]rune, startX, startY, width, height int) {
-	// Draw hexagon starting at (startX, startY)
-	// The first hexagon should have some symbols at position (0,0)
+func drawHex(screen [][]rune, startX, startY, width, height int) {
+	maxY := len(screen) - 1
+	maxX := len(screen[0]) - 1
 	
-	// Top line: underscores
+	// Top line with underscores
 	for i := 0; i < width; i++ {
-		if startX+height+i >= 1 && startX+height+i < len(screen[0])-1 {
-			screen[startY][startX+height+i] = '_'
+		x := startX + height + i
+		if x >= 1 && x <= maxX {
+			screen[startY][x] = '_'
 		}
 	}
 	
 	// Upper expanding part
 	for i := 0; i < height; i++ {
 		y := startY + 1 + i
-		if y >= 1 && y < len(screen)-1 {
+		if y >= 1 && y <= maxY {
 			// Left side /
 			x := startX + height - 1 - i
-			if x >= 1 && x < len(screen[0])-1 {
+			if x >= 1 && x <= maxX {
 				screen[y][x] = '/'
 			}
 			// Right side \
 			x = startX + height + width + i
-			if x >= 1 && x < len(screen[0])-1 {
+			if x >= 1 && x <= maxX {
 				screen[y][x] = '\\'
 			}
 		}
@@ -124,23 +121,23 @@ func drawHexagon(screen [][]rune, startX, startY, width, height int) {
 	// Lower contracting part
 	for i := 0; i < height; i++ {
 		y := startY + height + 1 + i
-		if y >= 1 && y < len(screen)-1 {
+		if y >= 1 && y <= maxY {
 			// Left side \
 			x := startX + i
-			if x >= 1 && x < len(screen[0])-1 {
+			if x >= 1 && x <= maxX {
 				screen[y][x] = '\\'
 			}
 			// Right side /
 			x = startX + width + 2*height - 1 - i
-			if x >= 1 && x < len(screen[0])-1 {
+			if x >= 1 && x <= maxX {
 				screen[y][x] = '/'
 			}
 			
-			// Bottom line: underscores on last iteration
+			// Bottom line on last iteration
 			if i == height-1 {
 				for j := 0; j < width; j++ {
 					x = startX + height + j
-					if x >= 1 && x < len(screen[0])-1 {
+					if x >= 1 && x <= maxX {
 						screen[y][x] = '_'
 					}
 				}
