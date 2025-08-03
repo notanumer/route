@@ -4,54 +4,112 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
 func main() {
-	in := bufio.NewReader(os.Stdin)
-	out := bufio.NewWriter(os.Stdout)
-	defer out.Flush()
+	scanner := bufio.NewScanner(os.Stdin)
+	if !scanner.Scan() {
+		return
+	}
 
-	var t int
-	fmt.Fscan(in, &t)
+	parts := strings.Fields(scanner.Text())
+	if len(parts) != 5 {
+		return
+	}
 
-	for i := 0; i < t; i++ {
-		var width, height int
-		fmt.Fscan(in, &width, &height)
+	m, _ := strconv.Atoi(parts[0])
+	n, _ := strconv.Atoi(parts[1])
+	width, _ := strconv.Atoi(parts[2])
+	height, _ := strconv.Atoi(parts[3])
+	k, _ := strconv.Atoi(parts[4])
 
-		// Top line
-		topSpaces := height - 1
-		topLine := strings.Repeat(" ", topSpaces) + strings.Repeat("_", width)
-		fmt.Fprintln(out, topLine)
+	
+	screen := make([][]rune, n+2)
+	for i := range screen {
+		screen[i] = make([]rune, m+2)
+		for j := range screen[i] {
+			if i == 0 || i == n+1 {
+				if j == 0 || j == m+1 {
+					screen[i][j] = '+'
+				} else {
+					screen[i][j] = '-'
+				}
+			} else {
+				if j == 0 || j == m+1 {
+					screen[i][j] = '|'
+				} else {
+					screen[i][j] = ' '
+				}
+			}
+		}
+	}
 
-		// Upper diagonal lines
-		for j := 0; j < height-1; j++ {
-			spacesBefore := height - 1 - j - 1
-			spacesBetween := width + 2*j
-			line := strings.Repeat(" ", spacesBefore) + "/" + strings.Repeat(" ", spacesBetween) + "\\"
-			fmt.Fprintln(out, line)
+	placed := 0
+	rowSpacing := height + 1
+	colSpacing := width + height
+
+	
+	for row := 0; placed < k; row++ {
+		y := row * rowSpacing
+		if y + 2*height + 1 > n {
+			break
 		}
 
-		// Middle line
-		middleLine := "/" + strings.Repeat("_", width + 2*(height-1)) + "\\"
-		fmt.Fprintln(out, middleLine)
-
-		// Lower diagonal lines
-		for j := 0; j < height-1; j++ {
-			spacesBefore := j + 1
-			spacesBetween := width + 2*(height-2-j)
-			line := strings.Repeat(" ", spacesBefore) + "\\" + strings.Repeat(" ", spacesBetween) + "/"
-			fmt.Fprintln(out, line)
+		
+		offset := 0
+		if row%2 == 1 {
+			offset = colSpacing / 2
 		}
 
-		// Bottom line
-		bottomSpaces := height - 1
-		bottomLine := strings.Repeat(" ", bottomSpaces) + strings.Repeat("_", width)
-		fmt.Fprintln(out, bottomLine)
+		for col := 0; placed < k; col++ {
+			x := col * colSpacing + offset
+			if x + width + 2*height > m {
+				break
+			}
 
-		// Add an empty line between hexagons except the last one
-		if i < t-1 {
-			fmt.Fprintln(out)
+			
+			drawHexagon(screen, x+1, y+1, width, height)
+			placed++
+		}
+	}
+
+	
+	for i := 0; i < n+2; i++ {
+		for j := 0; j < m+2; j++ {
+			fmt.Print(string(screen[i][j]))
+		}
+		fmt.Println()
+	}
+}
+
+func drawHexagon(screen [][]rune, startX, startY, width, height int) {
+	
+
+	
+	for i := 0; i < width; i++ {
+		screen[startY][startX+height+i] = '_'
+	}
+
+	
+	for i := 0; i < height; i++ {
+		y := startY + 1 + i
+		screen[y][startX+height-1-i] = '/'  
+		screen[y][startX+height+width+i] = '\\' 
+	}
+
+	
+	for i := 0; i < height; i++ {
+		y := startY + height + 1 + i
+		screen[y][startX+i] = '\\'  
+		screen[y][startX+width+2*height-1-i] = '/' 
+
+		
+		if i == height-1 {
+			for j := 0; j < width; j++ {
+				screen[y][startX+height+j] = '_'
+			}
 		}
 	}
 }
