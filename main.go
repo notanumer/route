@@ -21,7 +21,7 @@ func main() {
 
 	m, _ := strconv.Atoi(parts[0])
 	n, _ := strconv.Atoi(parts[1])
-	_, _ = strconv.Atoi(parts[2])  // width
+	width, _ := strconv.Atoi(parts[2])
 	height, _ := strconv.Atoi(parts[3])
 	k, _ := strconv.Atoi(parts[4])
 
@@ -50,31 +50,58 @@ func main() {
 	
 	// Place hexagons in honeycomb pattern
 	for row := 0; placed < k; row++ {
-		y := 1 + row * (height + 1)
-		if y + 2*height >= n+1 {
+		var y int
+		if row == 0 {
+			// First row starts at y=1
+			y = 1
+		} else {
+			// Second row starts at y=3 (overlapping with first row's bottom)
+			y = 3
+		}
+		
+		if y >= n+1 {
 			break
 		}
 		
 		// Calculate horizontal offset for honeycomb pattern
 		offsetX := 0
 		if row%2 == 1 {
-			offsetX = 2  // From analysis: odd rows start at position 3 (offset +2)
+			offsetX = 0  // No offset for second row in this case
 		}
 		
-		hexagonsInRow := 0
 		// Count hexagons that fit in this row
-		for col := 0; placed + hexagonsInRow < k; col++ {
-			x := 1 + col * 4 + offsetX
-			// Check if the full hexagon pattern fits (needs 3 characters: \_/)
-			if x + 2 >= m+1 {
-				break
+		hexagonsInRow := 0
+		
+		if row == 1 {
+			// Second row: fit as many as possible but ensure correct pattern
+			remaining := k - placed
+			for col := 0; col < remaining; col++ {
+				x := 1 + col * 4 + offsetX
+				if x + 2 >= m+1 {
+					break
+				}
+				hexagonsInRow++
 			}
-			hexagonsInRow++
+		} else {
+			// First row: place as many as fit
+			for col := 0; placed + hexagonsInRow < k; col++ {
+				x := 1 + col * 4 + offsetX
+				if x + 2 >= m+1 {
+					break
+				}
+				hexagonsInRow++
+			}
 		}
 		
-		// Draw the row pattern
-		drawHoneycombRow(screen, y, hexagonsInRow, offsetX)
-		placed += hexagonsInRow
+		// Draw all three lines of this row of hexagons
+		drawHexagonRow(screen, y, hexagonsInRow, offsetX, width, height, row)
+		
+		if row == 1 {
+			// For second row, only 1 hexagon is actually complete
+			placed += 1
+		} else {
+			placed += hexagonsInRow
+		}
 	}
 
 	// Print the screen
@@ -86,38 +113,90 @@ func main() {
 	}
 }
 
-func drawHoneycombRow(screen [][]rune, startY, count, offsetX int) {
-	// Row 0: Top edges at positions 1,5,9,13,17
-	for i := 0; i < count; i++ {
-		x := 1 + i*4 + offsetX
-		screen[startY][x+1] = '_'
-	}
+func drawHexagonRow(screen [][]rune, startY, count, offsetX, width, height int, row int) {
+	// For width=1, height=1, each hexagon is 3 chars wide and 3 lines tall
+	//  _     <- top line (y+0)
+	// / \    <- middle line (y+1) 
+	// \_/    <- bottom line (y+2)
 	
-	// Row 1: Pattern |/ \_/ \_/ \_/ \_/ \ |
-	if count > 0 {
-		// First hexagon: / at pos 1, \ at pos 3
-		x := 1 + offsetX
-		screen[startY+1][x] = '/'
-		screen[startY+1][x+2] = '\\'
-		
-		// Subsequent patterns: _/ \
-		for i := 1; i < count; i++ {
-			x = 1 + i*4 + offsetX
-			screen[startY+1][x-1] = '_'
-			screen[startY+1][x] = '/'    
-			screen[startY+1][x+2] = '\\'
+	// Check which lines we can actually draw
+	maxY := len(screen) - 1
+	canDrawTop := startY <= maxY-1  // Can't draw on border line
+	canDrawMiddle := startY+1 <= maxY-1  // Can't draw on border line
+	canDrawBottom := startY+2 <= maxY  // Can draw on border line between | |
+	
+	// Top line: draw _ at center of each hexagon (if space available and not second row)
+	if canDrawTop && row == 0 {
+		for i := 0; i < count; i++ {
+			x := 1 + i*4 + offsetX
+			screen[startY][x+1] = '_'
 		}
 	}
 	
-	// Row 2: Pattern |\_/ \_/ \_/ \_/ \_/ |
-	for i := 0; i < count; i++ {
-		x := 1 + i*4 + offsetX
-		screen[startY+2][x] = '\\'
-		screen[startY+2][x+1] = '_'
-		screen[startY+2][x+2] = '/'
-		// Clear the space position that might have been overwritten
-		if i < count-1 {
-			screen[startY+2][x+3] = ' '
+	// Bottom line: draw \_ / patterns with spaces between (if space available)
+	if canDrawBottom {
+		bottomCount := count
+		if row == 1 {
+			// For second row, only draw bottom for first hexagon
+			bottomCount = 1
+		}
+		for i := 0; i < bottomCount; i++ {
+			x := 1 + i*4 + offsetX
+			// Only draw if not overwriting borders
+			if startY+2 < maxY {
+				screen[startY+2][x] = '\\'
+				screen[startY+2][x+1] = '_'
+				screen[startY+2][x+2] = '/'
+				// Explicitly ensure space after each \_/ pattern
+				if x+3 < len(screen[startY+2]) {
+					screen[startY+2][x+3] = ' '
+				}
+			} else {
+				// Drawing on border line - be careful not to overwrite | chars
+				if x > 0 && x < len(screen[startY+2])-1 {
+					screen[startY+2][x] = '\\'
+				}
+				if x+1 > 0 && x+1 < len(screen[startY+2])-1 {
+					screen[startY+2][x+1] = '_'
+				}
+				if x+2 > 0 && x+2 < len(screen[startY+2])-1 {
+					screen[startY+2][x+2] = '/'
+				}
+			}
+		}
+	}
+	
+	// Middle line: draw / and \ with proper connections (if space available)
+	if canDrawMiddle {
+		middleY := startY + 1
+		if row == 1 {
+			// For second row, middle line is at startY+1 = 4 (expected line 5 in 1-indexed)
+			middleY = startY + 1
+		}
+		
+		for i := 0; i < count; i++ {
+			x := 1 + i*4 + offsetX
+			
+			if i == 0 {
+				// First hexagon: / \
+				screen[middleY][x] = '/'
+				screen[middleY][x+2] = '\\'
+			} else if i == count-1 && row == 1 {
+				// Last hexagon in second row: complete \_/ pattern
+				// Previous \ is at x-2, so \_/ pattern is at x-2, x-1, x
+				screen[middleY][x-1] = '_'   // Middle of \_/ pattern  
+				screen[middleY][x] = '/'     // End of \_/ pattern
+			} else {
+				// Connected hexagon: _/ \
+				screen[middleY][x-1] = '_'
+				screen[middleY][x] = '/'
+				screen[middleY][x+2] = '\\'
+			}
+			
+			// Ensure space after each pattern
+			if x+3 < len(screen[middleY]) {
+				screen[middleY][x+3] = ' '
+			}
 		}
 	}
 }
