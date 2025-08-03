@@ -26,26 +26,24 @@ func NewHexagonDrawer(width, height int) *HexagonDrawer {
 func (h *HexagonDrawer) Draw() []string {
 	var lines []string
 	
-	// Top part of hexagon (expanding outward)
+	// Top part - starts with underscores
+	topSpaces := h.height
+	topLine := strings.Repeat(" ", topSpaces) + strings.Repeat("_", h.width)
+	lines = append(lines, topLine)
+	
+	// Upper expanding part
 	for i := 0; i < h.height; i++ {
 		spacesBefore := h.height - 1 - i
-		spacesBetween := h.width + 2*i
-		line := strings.Repeat(" ", spacesBefore) + "/" + 
-				strings.Repeat(" ", spacesBetween) + "\\"
+		spacesInside := h.width + 2*i
+		line := strings.Repeat(" ", spacesBefore) + "/" + strings.Repeat(" ", spacesInside) + "\\"
 		lines = append(lines, line)
 	}
 	
-	// Middle part (widest part with underscores)
-	middleWidth := h.width + 2*h.height
-	middleLine := "/" + strings.Repeat("_", middleWidth) + "\\"
-	lines = append(lines, middleLine)
-	
-	// Bottom part of hexagon (contracting inward)
+	// Lower contracting part
 	for i := 0; i < h.height; i++ {
 		spacesBefore := i
-		underscoresBetween := h.width + 2*(h.height-1-i)
-		line := strings.Repeat(" ", spacesBefore) + "\\" + 
-				strings.Repeat("_", underscoresBetween) + "/"
+		underscoresInside := h.width + 2*(h.height-1-i)
+		line := strings.Repeat(" ", spacesBefore) + "\\" + strings.Repeat("_", underscoresInside) + "/"
 		lines = append(lines, line)
 	}
 	
