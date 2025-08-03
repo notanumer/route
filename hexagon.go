@@ -42,8 +42,14 @@ func (h *HexagonDrawer) Draw() []string {
 	// Lower contracting part
 	for i := 0; i < h.height; i++ {
 		spacesBefore := i
-		underscoresInside := h.width + 2*(h.height-1-i)
-		line := strings.Repeat(" ", spacesBefore) + "\\" + strings.Repeat("_", underscoresInside) + "/"
+		var line string
+		// For the bottom side, use exactly 'width' underscores
+		if i == h.height-1 {
+			line = strings.Repeat(" ", spacesBefore) + "\\" + strings.Repeat("_", h.width) + "/"
+		} else {
+			spacesInside := h.width + 2*(h.height-1-i)
+			line = strings.Repeat(" ", spacesBefore) + "\\" + strings.Repeat(" ", spacesInside) + "/"
+		}
 		lines = append(lines, line)
 	}
 	

@@ -1,0 +1,12 @@
+Expected for 1 1:
+ _
+? ?
+? ?
+
+Current output for 1 1:
+ _
+/ \
+\_/
+
+The error says: expected: ' _', found: '/ \'
+This suggests the first line is not matching.

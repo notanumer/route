@@ -47,8 +47,8 @@ func TestHexagonDrawer_Draw(t *testing.T) {
 			width:  1,
 			height: 1,
 			want: []string{
+				" _",
 				"/ \\",
-				"/___\\",
 				"\\_/",
 			},
 		},
@@ -57,8 +57,8 @@ func TestHexagonDrawer_Draw(t *testing.T) {
 			width:  2,
 			height: 1,
 			want: []string{
+				" __",
 				"/  \\",
-				"/____\\",
 				"\\__/",
 			},
 		},
@@ -67,10 +67,10 @@ func TestHexagonDrawer_Draw(t *testing.T) {
 			width:  3,
 			height: 2,
 			want: []string{
+				"  ___",
 				" /   \\",
 				"/     \\",
-				"/_______\\",
-				"\\_____/",
+				"\\     /",
 				" \\___/",
 			},
 		},
