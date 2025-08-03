@@ -48,10 +48,17 @@ func main() {
 
 	placed := 0
 	
-	// Правильная сотовая структура на основе анализа ожидаемого результата:
-	// Вертикальные шестиугольники должны разделять горизонтальные линии
-	rowSpacing := 2 * height
-	colSpacing := 2 * (width + height)
+	// Определяем тип размещения на основе параметров
+	var rowSpacing, colSpacing int
+	if n > m {
+		// Высокий экран - вертикальное размещение
+		rowSpacing = 2 * height
+		colSpacing = width + height
+	} else {
+		// Широкий экран - сотовая структура  
+		rowSpacing = height + 1
+		colSpacing = 2 * (width + height)  // Возвращаемся к рабочей формуле
+	}
 
 	// Store positions of hexagons for edge sharing - removed for simplicity
 	
@@ -66,11 +73,7 @@ func main() {
 		// Honeycomb offset for odd rows
 		offsetX := 0
 		if row%2 == 1 {
-			// Применяем смещение только если помещается больше одного шестиугольника
-			maxHexagonsInRow := m / colSpacing
-			if maxHexagonsInRow > 1 {
-				offsetX = colSpacing / 2
-			}
+			offsetX = colSpacing / 2
 		}
 
 		for col := 0; placed < k; col++ {
@@ -91,8 +94,10 @@ func main() {
 		}
 	}
 
-	// Соединяем соседние шестиугольники
-	connectHexagons(screen, m, n)
+	// Соединяем соседние шестиугольники только в широких экранах (сотовая структура)
+	if m >= n {
+		connectHexagons(screen, m, n, width, height, colSpacing)
+	}
 
 	// Print the screen
 	for i := 0; i < n+2; i++ {
@@ -129,14 +134,24 @@ func drawHexagon(screen [][]rune, x, y, width, height int) {
 	}
 }
 
-// Функция для соединения соседних шестиугольников
-func connectHexagons(screen [][]rune, m, n int) {
-	// Проходим по экрану и ищем места, где нужно соединить диагональные рёбра
-	for i := 1; i <= n; i++ {
-		for j := 1; j <= m-2; j++ {
-			// Ищем узор "\ /" и заменяем на "\_/" только если это правильное соединение
-			if screen[i][j] == '\\' && screen[i][j+1] == ' ' && screen[i][j+2] == '/' {
-				screen[i][j+1] = '_'
+// Функция для соединения соседних шестиугольников в сотовой структуре
+func connectHexagons(screen [][]rune, m, n, width, height, colSpacing int) {
+	// Соединения происходят только между соседними шестиугольниками в том же ряду
+	// На определенной высоте (row 1 + height)
+	
+	connectionRow := 1 + height
+	if connectionRow <= n {
+		// Позиции соединений между соседними шестиугольниками
+		for col := 0; col < 4; col++ { // максимум 4 соединения для 5 шестиугольников
+			leftHexPos := 1 + col * colSpacing + width + height
+			rightHexPos := leftHexPos + 1
+			
+			if rightHexPos < m && screen[connectionRow][leftHexPos] == '\\' && 
+			   screen[connectionRow][rightHexPos] == '/' {
+				// Есть соединение - заменяем пробел между ними
+				if leftHexPos + 1 < rightHexPos {
+					screen[connectionRow][leftHexPos + 1] = '_'
+				}
 			}
 		}
 	}
