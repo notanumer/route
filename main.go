@@ -48,20 +48,17 @@ func main() {
 
 	placed := 0
 	
-	// In honeycomb pattern:
-	// - Vertical spacing: 2*height (hexagons share horizontal edges)
-	// - Horizontal spacing: for proper honeycomb tiling
-	// - Odd rows are offset by half the horizontal spacing
-	
-	rowSpacing := 2*height
-	colSpacing := 2*width + 2*height  // Correct spacing for proper positions
+	// Правильная сотовая структура на основе анализа ожидаемого результата:
+	// Вертикальные шестиугольники должны разделять горизонтальные линии
+	rowSpacing := 2 * height
+	colSpacing := 2 * (width + height)
 
 	// Store positions of hexagons for edge sharing - removed for simplicity
 	
 	for row := 0; placed < k; row++ {
 		startY := row * rowSpacing
 		
-		// Check if hexagon fits vertically (need 2*height+1 total height)
+		// Check if hexagon fits vertically
 		if startY + 2*height + 1 > n {
 			break
 		}
@@ -69,7 +66,11 @@ func main() {
 		// Honeycomb offset for odd rows
 		offsetX := 0
 		if row%2 == 1 {
-			offsetX = colSpacing / 2
+			// Применяем смещение только если помещается больше одного шестиугольника
+			maxHexagonsInRow := m / colSpacing
+			if maxHexagonsInRow > 1 {
+				offsetX = colSpacing / 2
+			}
 		}
 
 		for col := 0; placed < k; col++ {
@@ -89,6 +90,9 @@ func main() {
 			placed++
 		}
 	}
+
+	// Соединяем соседние шестиугольники
+	connectHexagons(screen, m, n)
 
 	// Print the screen
 	for i := 0; i < n+2; i++ {
@@ -122,5 +126,18 @@ func drawHexagon(screen [][]rune, x, y, width, height int) {
 	// Bottom edge
 	for i := 0; i < width; i++ {
 		screen[y+2*height][x+height+i] = '_'
+	}
+}
+
+// Функция для соединения соседних шестиугольников
+func connectHexagons(screen [][]rune, m, n int) {
+	// Проходим по экрану и ищем места, где нужно соединить диагональные рёбра
+	for i := 1; i <= n; i++ {
+		for j := 1; j <= m-2; j++ {
+			// Ищем узор "\ /" и заменяем на "\_/" только если это правильное соединение
+			if screen[i][j] == '\\' && screen[i][j+1] == ' ' && screen[i][j+2] == '/' {
+				screen[i][j+1] = '_'
+			}
+		}
 	}
 }
