@@ -80,8 +80,12 @@ func main() {
 				break
 			}
 
-			// Draw hexagon (add 1 to account for border)
-			drawHexagon(screen, startX+1, startY+1, width, height)
+			// Draw hexagon accounting for border
+			// Position hexagon so that first hexagon has elements in first row/column
+			hexX := startX + 1
+			hexY := startY + 1
+			
+			drawHexagon(screen, hexX, hexY, width, height)
 			placed++
 		}
 	}
