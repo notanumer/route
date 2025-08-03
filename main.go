@@ -25,7 +25,7 @@ func main() {
 	height, _ := strconv.Atoi(parts[3])
 	k, _ := strconv.Atoi(parts[4])
 
-	
+	// Initialize screen with borders
 	screen := make([][]rune, n+2)
 	for i := range screen {
 		screen[i] = make([]rune, m+2)
@@ -47,35 +47,46 @@ func main() {
 	}
 
 	placed := 0
-	rowSpacing := height + 1
-	colSpacing := width + height
+	
+	// In honeycomb pattern:
+	// - Vertical spacing: 2*height (hexagons share horizontal edges)
+	// - Horizontal spacing: for proper honeycomb tiling
+	// - Odd rows are offset by half the horizontal spacing
+	
+	rowSpacing := 2*height
+	colSpacing := 2*width + 2*height  // Correct spacing for proper positions
 
+	// Store positions of hexagons for edge sharing - removed for simplicity
 	
 	for row := 0; placed < k; row++ {
-		y := row * rowSpacing
-		if y + 2*height + 1 > n {
+		startY := row * rowSpacing
+		
+		// Check if hexagon fits vertically (need 2*height+1 total height)
+		if startY + 2*height + 1 > n {
 			break
 		}
 
-		
-		offset := 0
+		// Honeycomb offset for odd rows
+		offsetX := 0
 		if row%2 == 1 {
-			offset = colSpacing / 2
+			offsetX = colSpacing / 2
 		}
 
 		for col := 0; placed < k; col++ {
-			x := col * colSpacing + offset
-			if x + width + 2*height > m {
+			startX := col * colSpacing + offsetX
+			
+			// Check if hexagon fits horizontally
+			if startX + width + 2*height > m {
 				break
 			}
 
-			
-			drawHexagon(screen, x+1, y+1, width, height)
+			// Draw hexagon (add 1 to account for border)
+			drawHexagon(screen, startX+1, startY+1, width, height)
 			placed++
 		}
 	}
 
-	
+	// Print the screen
 	for i := 0; i < n+2; i++ {
 		for j := 0; j < m+2; j++ {
 			fmt.Print(string(screen[i][j]))
@@ -84,32 +95,28 @@ func main() {
 	}
 }
 
-func drawHexagon(screen [][]rune, startX, startY, width, height int) {
-	
-
-	
+func drawHexagon(screen [][]rune, x, y, width, height int) {
+	// Top edge 
 	for i := 0; i < width; i++ {
-		screen[startY][startX+height+i] = '_'
+		screen[y][x+height+i] = '_'
 	}
 
-	
+	// Upper slanted edges
 	for i := 0; i < height; i++ {
-		y := startY + 1 + i
-		screen[y][startX+height-1-i] = '/'  
-		screen[y][startX+height+width+i] = '\\' 
+		rowIdx := y + 1 + i
+		screen[rowIdx][x+height-1-i] = '/'
+		screen[rowIdx][x+height+width+i] = '\\'
 	}
 
-	
+	// Lower slanted edges
 	for i := 0; i < height; i++ {
-		y := startY + height + 1 + i
-		screen[y][startX+i] = '\\'  
-		screen[y][startX+width+2*height-1-i] = '/' 
+		rowIdx := y + height + 1 + i
+		screen[rowIdx][x+i] = '\\'
+		screen[rowIdx][x+width+2*height-1-i] = '/'
+	}
 
-		
-		if i == height-1 {
-			for j := 0; j < width; j++ {
-				screen[y][startX+height+j] = '_'
-			}
-		}
+	// Bottom edge
+	for i := 0; i < width; i++ {
+		screen[y+2*height][x+height+i] = '_'
 	}
 }
