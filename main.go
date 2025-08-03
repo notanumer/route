@@ -25,7 +25,7 @@ func main() {
 	height, _ := strconv.Atoi(parts[3])
 	k, _ := strconv.Atoi(parts[4])
 
-	
+	// Initialize screen with borders
 	screen := make([][]rune, n+2)
 	for i := range screen {
 		screen[i] = make([]rune, m+2)
@@ -47,35 +47,59 @@ func main() {
 	}
 
 	placed := 0
-	rowSpacing := height + 1
-	colSpacing := width + height
+	
+	// Определяем тип размещения на основе параметров
+	var rowSpacing, colSpacing int
+	if n > m {
+		// Высокий экран - вертикальное размещение
+		rowSpacing = 2 * height
+		colSpacing = width + height
+	} else {
+		// Широкий экран - сотовая структура  
+		rowSpacing = height + 1
+		colSpacing = 2 * (width + height)  // Возвращаемся к рабочей формуле
+	}
 
+	// Store positions of hexagons for edge sharing - removed for simplicity
 	
 	for row := 0; placed < k; row++ {
-		y := row * rowSpacing
-		if y + 2*height + 1 > n {
+		startY := row * rowSpacing
+		
+		// Check if hexagon fits vertically
+		if startY + 2*height + 1 > n {
 			break
 		}
 
-		
-		offset := 0
+		// Honeycomb offset for odd rows
+		offsetX := 0
 		if row%2 == 1 {
-			offset = colSpacing / 2
+			offsetX = colSpacing / 2
 		}
 
 		for col := 0; placed < k; col++ {
-			x := col * colSpacing + offset
-			if x + width + 2*height > m {
+			startX := col * colSpacing + offsetX
+			
+			// Check if hexagon fits horizontally
+			if startX + width + 2*height > m {
 				break
 			}
 
+			// Draw hexagon accounting for border
+			// Position hexagon so that first hexagon has elements in first row/column
+			hexX := startX + 1
+			hexY := startY + 1
 			
-			drawHexagon(screen, x+1, y+1, width, height)
+			drawHexagon(screen, hexX, hexY, width, height)
 			placed++
 		}
 	}
 
-	
+	// Соединяем соседние шестиугольники только в широких экранах (сотовая структура)
+	if m >= n {
+		connectHexagons(screen, m, n, width, height, colSpacing)
+	}
+
+	// Print the screen
 	for i := 0; i < n+2; i++ {
 		for j := 0; j < m+2; j++ {
 			fmt.Print(string(screen[i][j]))
@@ -84,31 +108,50 @@ func main() {
 	}
 }
 
-func drawHexagon(screen [][]rune, startX, startY, width, height int) {
-	
-
-	
+func drawHexagon(screen [][]rune, x, y, width, height int) {
+	// Top edge 
 	for i := 0; i < width; i++ {
-		screen[startY][startX+height+i] = '_'
+		screen[y][x+height+i] = '_'
 	}
 
-	
+	// Upper slanted edges
 	for i := 0; i < height; i++ {
-		y := startY + 1 + i
-		screen[y][startX+height-1-i] = '/'  
-		screen[y][startX+height+width+i] = '\\' 
+		rowIdx := y + 1 + i
+		screen[rowIdx][x+height-1-i] = '/'
+		screen[rowIdx][x+height+width+i] = '\\'
 	}
 
-	
+	// Lower slanted edges
 	for i := 0; i < height; i++ {
-		y := startY + height + 1 + i
-		screen[y][startX+i] = '\\'  
-		screen[y][startX+width+2*height-1-i] = '/' 
+		rowIdx := y + height + 1 + i
+		screen[rowIdx][x+i] = '\\'
+		screen[rowIdx][x+width+2*height-1-i] = '/'
+	}
 
-		
-		if i == height-1 {
-			for j := 0; j < width; j++ {
-				screen[y][startX+height+j] = '_'
+	// Bottom edge
+	for i := 0; i < width; i++ {
+		screen[y+2*height][x+height+i] = '_'
+	}
+}
+
+// Функция для соединения соседних шестиугольников в сотовой структуре
+func connectHexagons(screen [][]rune, m, n, width, height, colSpacing int) {
+	// Соединения происходят только между соседними шестиугольниками в том же ряду
+	// На определенной высоте (row 1 + height)
+	
+	connectionRow := 1 + height
+	if connectionRow <= n {
+		// Позиции соединений между соседними шестиугольниками
+		for col := 0; col < 4; col++ { // максимум 4 соединения для 5 шестиугольников
+			leftHexPos := 1 + col * colSpacing + width + height
+			rightHexPos := leftHexPos + 1
+			
+			if rightHexPos < m && screen[connectionRow][leftHexPos] == '\\' && 
+			   screen[connectionRow][rightHexPos] == '/' {
+				// Есть соединение - заменяем пробел между ними
+				if leftHexPos + 1 < rightHexPos {
+					screen[connectionRow][leftHexPos + 1] = '_'
+				}
 			}
 		}
 	}
