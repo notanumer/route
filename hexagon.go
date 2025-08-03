@@ -107,13 +107,8 @@ func main() {
 	}
 	
 	// Process each test case
-	for i, testCase := range testCases {
+	for _, testCase := range testCases {
 		width, height := testCase[0], testCase[1]
-		
-		// Add empty line between hexagons (except before the first one)
-		if i > 0 {
-			fmt.Println()
-		}
 		
 		// Create and draw hexagon
 		drawer := NewHexagonDrawer(width, height)
